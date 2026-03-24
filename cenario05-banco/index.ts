@@ -66,7 +66,21 @@ function depositar(dados: IDepositar): boolean {
     // 4. Adicionar o valor ao saldo da conta
     // 5. Registrar a movimentação no extrato
 
-    return false
+    const conta = contas.find(p => p.id === dados.contaId);
+
+    if(!conta || !conta.ativa || dados.valor < 10) {
+        return false
+    }
+
+    conta.saldo += dados.valor;
+
+    conta.extrato.push({
+        tipo: 'deposito',
+        valor: dados.valor,
+        data: new Date()
+    })
+
+    return true
 }
 
 function sacar(dados: ISacar): boolean {
@@ -79,7 +93,21 @@ function sacar(dados: ISacar): boolean {
     // 4. Subtrair o valor do saldo
     // 5. Registrar a movimentação no extrato
 
-    return false
+    const conta = contas.find(p => p.id === dados.contaId);
+
+    if(!conta || !conta.ativa || dados.valor > conta.saldo) {
+        return false
+    }
+
+    conta.saldo -= dados.valor;
+
+    conta.extrato.push({
+        tipo: 'saque',
+        valor: dados.valor,
+        data: new Date()
+    })
+
+    return true
 }
 
 function transferir(dados: ITransferir): boolean {
@@ -94,7 +122,36 @@ function transferir(dados: ITransferir): boolean {
     // 6. Descontar valor + taxa da origem e adicionar valor ao destino
     // 7. Registrar movimentação no extrato de ambas as contas
 
-    return false
+    const origem = contas.find(p => p.id === dados.contaOrigemId);
+    const destino = contas.find(p => p.id === dados.contaDestinoId);
+
+    if (!origem || !destino || !origem.ativa || !destino.ativa || dados.valor > 5000) {
+        return false;
+    }
+
+    const taxa = origem.banco !== destino.banco ? 2.50 : 0;
+    const custoTotal = dados.valor + taxa;
+
+    if (origem.saldo < custoTotal) {
+        return false;
+    }
+
+    origem.saldo -= custoTotal;
+    destino.saldo += dados.valor;
+
+    origem.extrato.push({
+        tipo: 'transferencia_enviada',
+        valor: dados.valor,
+        data: new Date()
+    });
+
+    destino.extrato.push({
+        tipo: 'transferencia_recebida',
+        valor: dados.valor,
+        data: new Date()
+    });
+
+    return true
 }
 
 // ==================== FUNÇÕES AUXILIARES ====================
