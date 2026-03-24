@@ -66,7 +66,6 @@ function calcularPedido(pedido: IPedido): IResultadoPedido {
     // 7. Calcular valor total: subtotal - desconto + gorjeta + taxaEntrega
 
 
-    // 1.
     const totalItem = pedido.itens.reduce((soma, item) => soma + item.quantidade, 0)
 
     if (pedido.itens.length === 0 || totalItem > 20){
@@ -83,7 +82,6 @@ function calcularPedido(pedido: IPedido): IResultadoPedido {
     let subtotal = 0
     const categoriasNoPedido = new Set<string>()
 
-    //2.
     for (const item of pedido.itens) {
         const ItemCardapio = cardapio.find(p => p.id === item.itemId)
 
@@ -93,7 +91,6 @@ function calcularPedido(pedido: IPedido): IResultadoPedido {
         }
     }
 
-    //3.
     if (subtotal < 25.00) {
         return {
             subtotal: 0,
@@ -105,7 +102,6 @@ function calcularPedido(pedido: IPedido): IResultadoPedido {
         }
     }
 
-    //4.
     let desconto = 0;
     const temCombo = categoriasNoPedido.has('prato') && 
                      categoriasNoPedido.has('bebida') && 
@@ -115,16 +111,12 @@ function calcularPedido(pedido: IPedido): IResultadoPedido {
         desconto = subtotal * 0.15;
     }
 
-    // 5. 
     const gorjeta = pedido.gorjeta ? subtotal * 0.10 : 0;
 
-    // 6. 
     const taxaEntrega = subtotal > 100.00 ? 0 : 8.00;
 
-    // 7. 
     const valorTotal = subtotal - desconto + gorjeta + taxaEntrega;
 
-    // Retornamos os valores garantindo que seja true aqui
     return {
         subtotal: Number(subtotal.toFixed(2)),
         desconto: Number(desconto.toFixed(2)),
@@ -133,8 +125,6 @@ function calcularPedido(pedido: IPedido): IResultadoPedido {
         valorTotal: Number(valorTotal.toFixed(2)),
         ehValido: true
     };
-
-    
     
 }
 
