@@ -51,7 +51,11 @@ const filmes: IFilme[] = [
 
 // ==================== FUNÇÃO A IMPLEMENTAR ====================
 
+
 function comprarIngressos(compra: ICompraIngresso): IResultadoCompra {
+    const filme = filmes.find(f => f.id === compra.filmeId)
+
+
     // TODO: Implementar a lógica seguindo as regras de negócio
     //
     // Passos sugeridos:
@@ -63,13 +67,80 @@ function comprarIngressos(compra: ICompraIngresso): IResultadoCompra {
     //    c. Se meia-entrada (estudante ou idade >= 60): valor *= 0.50
     //    d. Se sessão 3D: valor += R$ 10,00
     // 4. Somar todos os ingressos
+    if (!filme) {
+        return {
+            valorTotal: 0,
+            quantidadeIngressos: 0,
+            ehValida: false
+        }
+    }
+
+
+    const quantidadeIngressos = compra.espectadores.length
+
+
+    if (quantidadeIngressos > 6) {
+        return {
+            valorTotal: 0,
+            quantidadeIngressos: quantidadeIngressos,
+            ehValida: false
+        }
+    }
+
+
+    for (const espectador of compra.espectadores) {
+        if (compra.sessao === 'noite' && espectador.idade < 16) {
+            return {
+                valorTotal: 0,
+                quantidadeIngressos: quantidadeIngressos,
+                ehValida: false
+            }
+        }
+    }
+
+
+    if (escape(compra.sessao) === 'noite') {
+        return {
+            valorTotal: 0,
+            quantidadeIngressos: quantidadeIngressos,
+            ehValida: false
+        }
+    }
+
+
+    let valorTotal = 0
+
+
+    for (const espectador of compra.espectadores) {
+        let valorIngresso = 40
+
+
+        if (compra.diaSemana === 2) {
+            valorIngresso *= 0.70
+        }
+
+
+        if (espectador.ehEstudante || espectador.idade >= 60) {
+            valorIngresso *= 0.50
+        }
+
+
+        if (filme.eh3D) {
+            valorIngresso += 10
+        }
+
+
+        valorTotal += valorIngresso
+    }
+
 
     return {
-        valorTotal: 0,
-        quantidadeIngressos: 0,
-        ehValida: false
+        valorTotal,
+        quantidadeIngressos: quantidadeIngressos,
+        ehValida: true
     }
-}
+}  
+
 
 // ==================== TESTES ====================
 
