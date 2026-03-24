@@ -1,0 +1,21 @@
+{
+  "name": "prova",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev:cenario01": "tsx watch cenario01-restaurante/index.ts",
+    "dev:cenario02": "tsx watch cenario02-cinema/index.ts",
+    "dev:cenario03": "tsx watch cenario03-academia/index.ts",
+    "dev:cenario04": "tsx watch cenario04-estacionamento/index.ts",
+    "dev:cenario05": "tsx watch cenario05-banco/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
