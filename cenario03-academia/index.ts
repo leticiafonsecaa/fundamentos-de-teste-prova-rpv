@@ -65,23 +65,48 @@ const checkIns: IRegistroCheckin[] = []
 // ==================== FUNÇÕES A IMPLEMENTAR ====================
 
 function calcularPlano(plano: string, personal: boolean): IResultadoPlano {
-    // TODO: Implementar a lógica seguindo as regras de negócio
-    //
-    // Passos sugeridos:
-    // 1. Verificar se o plano é válido ('mensal', 'trimestral' ou 'anual')
-    // 2. Obter o valor base do plano
-    // 3. Se personal === true, adicionar R$ 50,00/mês
-    // 4. Calcular valor mensal e valor total
-    //    - mensal: 1 mês | trimestral: 3 meses | anual: 12 meses
+    const configs: Record<string, { total: number; meses: number }> = {
+        // TODO: Implementar a lógica seguindo as regras de negócio
+        //
+        // Passos sugeridos:
+        // 1. Verificar se o plano é válido ('mensal', 'trimestral' ou 'anual')
+        // 2. Obter o valor base do plano
+        // 3. Se personal === true, adicionar R$ 50,00/mês
+        // 4. Calcular valor mensal e valor total
+        //    - mensal: 1 mês | trimestral: 3 meses | anual: 12 meses
+
+
+        mensal: { total: 99.90, meses: 1 },
+        trimestral: { total: 249.90, meses: 3 },
+        anual: { total: 899.90, meses: 12 }
+    };
+
+
+    const p = configs[plano.toLowerCase()];
+
+
+    if (!p){
+        return { valorMensal: 0, valorTotal: 0, ehValido: false };
+    }
+
+    const taxaPersonalTotal = personal ? (50 * p.meses) : 0;
+    const valorTotal = p.total + taxaPersonalTotal;
+
 
     return {
-        valorMensal: 0,
-        valorTotal: 0,
-        ehValido: false
-    }
+        valorMensal: valorTotal / p.meses,
+        valorTotal,
+        ehValido: true
+    };
 }
 
+
+
+
+
+
 function realizarCheckin(checkin: ICheckin): IResultadoCheckin {
+    const aluno = alunos.find(a => a.id === checkin.alunoId);
     // TODO: Implementar a lógica seguindo as regras de negócio
     //
     // Passos sugeridos:
@@ -92,11 +117,44 @@ function realizarCheckin(checkin: ICheckin): IResultadoCheckin {
     // 5. Verificar se já existe check-in do aluno no mesmo dia
     // 6. Se tudo ok, registrar o check-in no array checkIns
 
-    return {
-        permitido: false,
-        mensagem: ''
+
+    const dataRef = (checkin as any).data ? new Date((checkin as any).data) : new Date();
+    const hora = dataRef.getHours();
+
+
+    if (!aluno || !aluno.ativo) {
+        return { permitido: false, mensagem: "Inativo" };
     }
+
+
+    if (new Date(aluno.vencimento) < dataRef){
+        return { permitido: false, mensagem: "Vencido" };
+    }
+
+
+    if (hora < 6 || hora >= 23){
+        return { permitido: false, mensagem: "Fora do horário" };
+    }
+
+
+    const jaFez = checkIns.some(c =>
+        c.alunoId === aluno.id &&
+        new Date((c as any).data).toDateString() === dataRef.toDateString()
+    );
+
+
+    if (jaFez){
+        return { permitido: false, mensagem: "Limite atingido" };
+    }
+
+    checkIns.push({ ...checkin, data: dataRef } as any);
+    return { permitido: false, mensagem: "Sucesso" };
 }
+
+
+
+
+
 
 function cancelarPlano(alunoId: number): IResultadoCancelamento {
     // TODO: Implementar a lógica seguindo as regras de negócio
@@ -109,11 +167,32 @@ function cancelarPlano(alunoId: number): IResultadoCancelamento {
     // 5. Multa = 20% do valor restante
     // 6. Retornar a multa
 
-    return {
-        multa: 0,
-        ehValido: false
+
+    const aluno = alunos.find(a => a.id === alunoId);
+    const hoje = new Date();
+
+
+    if (!aluno || !aluno.ativo) {
+        return { multa: 0, ehValido: false };
     }
+
+
+    const mesesRestantes = Math.max(0, (new Date(aluno.vencimento).getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24 * 30));
+
+
+    const valorRestante = mesesRestantes * (aluno as any).valorMensal;
+    const multa = valorRestante * 0.2;
+
+
+    aluno.ativo = false;
+
+
+    return {
+        multa: Number(multa.toFixed(2)),
+        ehValido: true
+    };
 }
+
 
 // ==================== TESTES ====================
 
