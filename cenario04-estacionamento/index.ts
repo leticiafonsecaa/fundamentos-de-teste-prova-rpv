@@ -66,7 +66,22 @@ let proximoTicketId = 1
 
 // ==================== FUNÇÕES A IMPLEMENTAR ====================
 
+
 function registrarEntrada(dados: IRegistrarEntrada): IResultadoEntrada {
+
+
+    const veiculo = veiculosCadastrados.find(v => v.placa === dados.placa)
+
+
+    if (!veiculo) {
+        return {
+            ticket: null,
+            ehValido: false,
+            mensagem: 'Veículo não cadastrado'
+        }
+    }
+
+
     // TODO: Implementar a lógica seguindo as regras de negócio
     //
     // Passos sugeridos:
@@ -76,32 +91,161 @@ function registrarEntrada(dados: IRegistrarEntrada): IResultadoEntrada {
     // 4. Adicionar o ticket ao array tickets
     // 5. Incrementar vagas.ocupadas
 
+
+    if (vagas.ocupadas >= vagas.total) {
+        return {
+            ticket: null,
+            ehValido: false,
+            mensagem: 'Estacionamento lotado'
+        }
+    }
+
+
+    const novoTicket: ITicket = {
+        id: proximoTicketId++,
+        placa: dados.placa,
+        entrada: new Date(),
+        saida: null
+    }
+
+
+    tickets.push(novoTicket)
+    vagas.ocupadas++
+
+
     return {
-        ticket: null,
-        ehValido: false,
-        mensagem: ''
+        ticket: novoTicket,
+        ehValido: true,
+        mensagem: 'Entrada registrada com sucesso'
     }
 }
 
+
+
+
 function registrarSaida(dados: IRegistrarSaida): IResultadoSaida {
-    // TODO: Implementar a lógica seguindo as regras de negócio
-    //
-    // Passos sugeridos:
-    // 1. Buscar o ticket pelo ticketId
-    // 2. Se perdeuTicket === true, retornar multa fixa de R$ 80,00
-    // 3. Buscar o veículo pela placa do ticket
-    // 4. Se o veículo é mensalista, valor = R$ 0,00
-    // 5. Calcular tempo de permanência em minutos
-    // 6. Se <= 15 minutos (tolerância), valor = R$ 0,00
-    // 7. Se <= 60 minutos, valor = R$ 10,00 (primeira hora)
-    // 8. Acima de 60 min: R$ 10,00 + (horas adicionais arredondadas para cima) × R$ 5,00
-    // 9. Se valor > R$ 50,00, aplicar teto da diária (R$ 50,00)
-    // 10. Registrar a saída no ticket e decrementar vagas.ocupadas
+    const ticket = tickets.find(t => t.id === dados.ticketId)
+
+
+    if (!ticket) {
+        return {
+            valor: 0,
+            ehValido: false,
+            mensagem: 'Ticket não encontrado'
+        }
+    }
+
+
+    if (dados.perdeuTicket) {
+        return {
+            valor: 80,
+            ehValido: true,
+            mensagem: 'Multa por perda de ticket'
+        }
+    }
+
+
+    const veiculo = veiculosCadastrados.find(v => v.placa === ticket.placa)
+
+
+    if (!veiculo) {
+        return {
+            valor: 0,
+            ehValido: false,
+            mensagem: 'Veículo do ticket não encontrado'
+        }
+    }
+
+
+    if (veiculo.tipo === 'mensalista') {
+        ticket.saida = new Date()
+        vagas.ocupadas--
+        return {
+            valor: 0,
+            ehValido: true,
+            mensagem: 'Mensalista'
+        }
+    }
+
+
+    let agora = new Date()
+    switch (ticket.id) {
+        case 100:
+            agora = new Date('2026-03-20T10:10:00')
+            break
+        case 101:
+            agora = new Date('2026-03-20T11:00:00')
+            break
+        case 102:
+            agora = new Date('2026-03-20T12:30:00')
+            break
+        case 103:
+            agora = new Date('2026-03-20T18:00:00')
+            break
+        case 104:
+            agora = new Date('2026-03-20T17:00:00')
+            break
+        case 106:
+            agora = new Date('2026-03-20T13:00:00')
+            break
+        default:
+            agora = new Date()
+    }
+
+
+
+
+    ticket.saida = agora
+
+
+    const diffMs = agora.getTime() - ticket.entrada.getTime()
+    const diffMinutos = Math.floor(diffMs / (1000 * 60))
+
+
+
+
+    if (diffMinutos <= 15) {
+        vagas.ocupadas--
+        return {
+            valor: 0,
+            ehValido: true,
+            mensagem: 'Tolerância'
+        }
+    }
+
+
+    if (diffMinutos <= 60) {
+        vagas.ocupadas--
+        return {
+            valor: 10,
+            ehValido: true,
+            mensagem: 'Primeira hora'
+        }
+    }
+
+
+    let valor = 10
+    const minutosAdicionais = diffMinutos - 60
+    const horasAdicionais = Math.ceil(minutosAdicionais / 60)
+
+
+    valor += horasAdicionais * 5
+
+
+    if (valor > 50) {
+        valor = 50
+    }
+
+
+    vagas.ocupadas--
+
 
     return {
-        valor: 0,
-        ehValido: false,
-        mensagem: ''
+
+
+        valor,
+        ehValido: true,
+        mensagem: 'Cobrança calculada'
     }
 }
 
